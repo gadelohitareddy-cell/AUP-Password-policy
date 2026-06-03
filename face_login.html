@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Face Login</title>
+
+    <meta charset="UTF-8">
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+
+    <style>
+
+        body{
+            background:#1e222d;
+            color:white;
+            font-family:sans-serif;
+            padding:20px;
+            display:flex;
+            justify-content:center;
+        }
+
+        .card{
+            background:rgba(255,255,255,0.05);
+            max-width:650px;
+            width:100%;
+            padding:30px;
+            border-radius:20px;
+        }
+
+        h2{
+            text-align:center;
+            margin-bottom:5px;
+        }
+
+        p{
+            text-align:center;
+        }
+
+        label{
+            font-weight:bold;
+            display:block;
+            margin-top:15px;
+            margin-bottom:8px;
+        }
+
+        .required{
+            color:red;
+        }
+
+        input, select{
+            width:100%;
+            padding:12px;
+            border-radius:10px;
+            border:1px solid #555;
+            background:#2d3748;
+            color:white;
+            box-sizing:border-box;
+            margin-bottom:12px;
+        }
+
+        input::placeholder{
+            color:#ccc;
+        }
+
+        video{
+            width:100%;
+            border-radius:15px;
+            border:2px solid #38bdf8;
+            margin-top:15px;
+            margin-bottom:20px;
+            background:black;
+        }
+
+        .grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:15px;
+            margin:20px 0;
+        }
+
+        .box{
+            padding:15px;
+            background:#4a5568;
+            border-radius:10px;
+            font-weight:bold;
+            text-align:center;
+            transition:0.3s;
+        }
+
+        .done{
+            background:#2ecc71 !important;
+        }
+
+        button{
+            width:100%;
+            padding:15px;
+            background:#38bdf8;
+            border:none;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;
+            margin-top:10px;
+        }
+
+        button:disabled{
+            background:#666;
+            cursor:not-allowed;
+        }
+
+        #otpSection{
+            display:none;
+        }
+
+        #otpStatus{
+            font-weight:bold;
+            margin-top:10px;
+        }
+
+        .policy-box{
+            background:#2d3748;
+            border-radius:10px;
+            padding:15px;
+            margin-top:15px;
+            max-height:220px;
+            overflow-y:auto;
+        }
+
+        .policy-box p{
+            text-align:left;
+            margin:10px 0;
+            line-height:1.5;
+        }
+
+        #vBtn{
+            display:none;
+        }
+
+        .error{
+            color:#ff6b6b;
+            font-size:13px;
+            margin-top:-5px;
+            margin-bottom:10px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>AUP & Password Policy</h2>
+
+    <p>
+         Digitalization System
+    </p>
+
+    <!-- POLICY VERSION BOX -->
+
+    <div style="
+    background:#243447;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+    border-left:5px solid #38bdf8;
+    ">
+
+        <h3 style="margin-top:0;">
+            Current Active Policies
+        </h3>
+
+        <p>
+            <strong>Password Policy:</strong>
+            Version 3.2
+        </p>
+
+        <p>
+            <strong>AUP Policy:</strong>
+            <span id="quarterText"></span>
+        </p>
+
+        <p style="
+        color:#ffcc00;
+        font-weight:bold;
+        ">
+
+            Employees must accept latest policies before authentication.
+
+        </p>
+
+    </div>
+
+    <!-- REVISION NOTICE -->
+
+    <div style="
+    background:#fff3cd;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:20px;
+    font-weight:bold;
+    color:#856404;
+    text-align:center;
+    ">
+
+        ⚠ Next AUP & Password Policy revision scheduled for October 2026
+
+    </div>
+
+    <!-- AUTH MODE -->
+
+    <label>
+        Authentication Mode <span class="required">*</span>
+    </label>
+
+    <select id="auth_mode" onchange="onAuthModeChange()">
+        <option value="live">Continue with Live Scan</option>
+        <option value="registered">Continue with Registered Profile</option>
+    </select>
+
+    <!-- EMPLOYEE ID -->
+
+    <label>
+        Employee ID <span class="required">*</span>
+    </label>
+
+    <input
+        type="text"
+        id="employee_id"
+        maxlength="5"
+        inputmode="numeric"
+        placeholder="Enter 5 Digit Employee ID"
+    >
+
+    <div class="error" id="idError"></div>
+
+    <!-- NAME -->
+
+    <label>
+        Full Name <span class="required">*</span>
+    </label>
+
+    <input
+        type="text"
+        id="name"
+        placeholder="Enter Full Name"
+    >
+
+    <div class="error" id="nameError"></div>
+
+    <!-- JH / DMT -->
+
+    <label>
+        JH / DMT Category <span class="required">*</span>
+    </label>
+
+    <select id="jh_dmt_select">
+
+        <option value="">Select Category</option>
+
+        <optgroup label="JH CATEGORY">
+            <option value="JH ISI">JH ISI</option>
+            <option value="JH HR">JH HR</option>
+            <option value="JH IT">JH IT</option>
+            <option value="JH 1A">JH 1A</option>
+            <option value="JH Department">JH Department</option>
+            <option value="JH OTHERS">JH OTHERS</option>
+        </optgroup>
+
+        <optgroup label="DMT CATEGORY">
+            <option value="DMT VETEND">DMT VETEND</option>
+            <option value="DMT SEMISKILLED">DMT SEMISKILLED</option>
+            <option value="DMT TIME OFFICE">DMT TIME OFFICE</option>
+            <option value="DMT TRAINEE">DMT TRAINEE</option>
+            <option value="DMT MANAGER">DMT MANAGER</option>
+        </optgroup>
+
+    </select>
+
+    <!-- PHONE -->
+
+    <label>
+        Phone Number <span class="required">*</span>
+    </label>
+
+    <input
+        type="tel"
+        id="phone"
+        placeholder="Enter Phone Number"
+    >
+
+    <button type="button" onclick="sendOTP()">
+        Send OTP
+    </button>
+
+    <!-- OTP -->
+
+    <div id="otpSection">
+
+        <input
+            type="text"
+            id="otp"
+            placeholder="Enter OTP"
+        >
+
+        <button type="button" onclick="verifyOTP()">
+            Verify OTP
+        </button>
+
+    </div>
+
+    <div id="otpStatus"></div>
+
+    <!-- EMAIL -->
+
+    <label>
+        Email Address <span class="required">*</span>
+    </label>
+
+    <input
+        type="email"
+        id="email"
+        placeholder="Enter Email Address"
+    >
+
+    <div class="error" id="emailError"></div>
+
+    <!-- POLICIES -->
+
+    <div class="policy-box">
+
+        <h3>Company Protocols (Mandatory Acceptance)</h3>
+
+        <p>1. I will ensure my own safety at workplace.</p>
+
+        <p>2. I will follow all company rules and regulations.</p>
+
+        <p>3. I will not share confidential information.</p>
+
+        <p>4. I will use company systems responsibly.</p>
+
+        <p>5. I will maintain discipline and punctuality.</p>
+
+        <p>6. I will respect colleagues and maintain teamwork.</p>
+
+        <p>7. I will not misuse company resources.</p>
+
+        <p>8. I will follow cybersecurity guidelines.</p>
+
+        <p>9. I will report suspicious activity immediately.</p>
+
+        <p>10. I accept all AUP and password security policies.</p>
+
+    </div>
+
+    <br>
+
+    <label>
+        <input type="checkbox" id="policy">
+        I agree to all mandatory protocols and policies
+    </label>
+
+    <!-- FACE SECTION -->
+
+    <div id="liveSection">
+        <h2 style="margin-top:25px;">
+            Liveness Check
+        </h2>
+
+        <p id="msg">
+            Move your face to complete the verification
+        </p>
+
+        <video id="video" autoplay muted></video>
+
+        <br><br>
+
+        <!-- CAPTURED IMAGE PREVIEW -->
+
+        <div id="previewSection"
+             style="display:none; text-align:center;">
+
+            <h3>Captured Photo Preview</h3>
+
+            <img
+                id="capturedImage"
+                style="
+                width:220px;
+                border-radius:10px;
+                border:3px solid #0074D9;
+                box-shadow:0 4px 10px rgba(0,0,0,0.2);
+                "
+            >
+
+            <br><br>
+
+            <button
+                type="button"
+                onclick="recapturePhoto()"
+                style="
+                background:#ff9800;
+                width:220px;
+                "
+            >
+                Recapture Photo
+            </button>
+
+        </div>
+
+        <div class="grid">
+
+            <div id="L" class="box">
+                Left
+            </div>
+
+            <div id="D" class="box">
+                Down
+            </div>
+
+        </div>
+    </div>
+
+    <div id="registeredSection" style="display:none; margin-top:25px;">
+        <h2>Registered Profile</h2>
+        <p id="registeredMsg">
+            Enter your Employee ID and Full Name, then load your registered profile photo.
+        </p>
+
+        <button type="button" onclick="loadRegisteredProfile()">
+            Load Registered Profile Photo
+        </button>
+
+        <div id="registeredPhotoPreview" style="display:none; text-align:center; margin-top:20px;">
+            <h3>Registered Profile Photo</h3>
+            <img
+                id="registeredImage"
+                style="width:220px; border-radius:10px; border:3px solid #0074D9; box-shadow:0 4px 10px rgba(0,0,0,0.2);"
+            >
+        </div>
+    </div>
+
+    <!-- VERIFY -->
+
+    <button id="vBtn" onclick="sendVerify()">
+        VERIFY IDENTITY
+    </button>
+
+</div>
+
+<script>
+
+const video = document.getElementById('video');
+
+const vBtn = document.getElementById('vBtn');
+
+const status = document.getElementById('msg');
+
+const authModeSelect = document.getElementById('auth_mode');
+const liveSection = document.getElementById('liveSection');
+const registeredSection = document.getElementById('registeredSection');
+const registeredPhotoPreview = document.getElementById('registeredPhotoPreview');
+const registeredImage = document.getElementById('registeredImage');
+const registeredMsg = document.getElementById('registeredMsg');
+
+let captured = false;
+
+let registeredLoaded = false;
+
+let currentStream = null;
+
+let check = {
+    left: false,
+    down: false
+};
+
+let generatedOTP = "";
+
+let otpVerified = false;
+
+/* =========================
+   OTP
+========================= */
+
+function sendOTP(){
+
+    let phone =
+        document.getElementById("phone").value;
+
+    if(!/^[6-9]\d{9}$/.test(phone)){
+
+        alert("Enter valid phone number");
+
+        return;
+    }
+
+    generatedOTP =
+        Math.floor(1000 + Math.random() * 9000).toString();
+
+    alert("Demo OTP: " + generatedOTP);
+
+    document.getElementById("otpSection").style.display =
+        "block";
+}
+
+function verifyOTP(){
+
+    let entered =
+        document.getElementById("otp").value;
+
+    if(entered === generatedOTP){
+
+        otpVerified = true;
+
+        document.getElementById("otpStatus").innerText =
+            "OTP Verified ✔";
+
+        document.getElementById("otpStatus").style.color =
+            "#2ecc71";
+
+    }else{
+
+        document.getElementById("otpStatus").innerText =
+            "Invalid OTP";
+
+        document.getElementById("otpStatus").style.color =
+            "red";
+    }
+}
+
+function onAuthModeChange() {
+    const mode = authModeSelect.value;
+
+    if (mode === 'registered') {
+        stopCamera();
+        liveSection.style.display = 'none';
+        registeredSection.style.display = 'block';
+        registeredPhotoPreview.style.display = registeredLoaded ? 'block' : 'none';
+        vBtn.style.display = registeredLoaded ? 'block' : 'none';
+        status.innerText = 'Registered profile mode selected. Load your profile photo.';
+        status.style.color = '#ffffff';
+    } else {
+        registeredSection.style.display = 'none';
+        registeredPhotoPreview.style.display = 'none';
+        registeredLoaded = false;
+        vBtn.style.display = check.left && check.down ? 'block' : 'none';
+        status.innerText = 'Move your face to complete the verification';
+        status.style.color = 'white';
+        recapturePhoto();
+        startCamera();
+    }
+}
+
+function startCamera() {
+    if (currentStream) {
+        return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            currentStream = stream;
+            video.srcObject = stream;
+            const loop = async () => {
+                await faceMesh.send({ image: video });
+                requestAnimationFrame(loop);
+            };
+            loop();
+        })
+        .catch(error => {
+            console.error('Camera error:', error);
+            status.innerText = 'Unable to start live scan camera.';
+            status.style.color = 'red';
+        });
+}
+
+function stopCamera() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+        video.srcObject = null;
+    }
+}
+
+async function loadRegisteredProfile() {
+    const employeeId = document.getElementById('employee_id').value.trim();
+    const name = document.getElementById('name').value.trim();
+
+    if (!/^\d{5}$/.test(employeeId)) {
+        alert('Employee ID must be exactly 5 digits');
+        return;
+    }
+
+    if (name.length < 3) {
+        alert('Enter valid name');
+        return;
+    }
+
+    const res = await fetch('/load_registered_photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee_id: employeeId, name })
+    });
+
+    const data = await res.json();
+
+    if (data.status === 'success') {
+        registeredLoaded = true;
+        registeredPhotoPreview.style.display = 'block';
+        registeredImage.src = data.photo_data;
+        vBtn.style.display = 'block';
+        registeredMsg.innerText = 'Registered profile photo loaded successfully.';
+        status.innerText = 'Registered profile loaded. Click VERIFY IDENTITY.';
+        status.style.color = '#2ecc71';
+    } else {
+        registeredLoaded = false;
+        registeredPhotoPreview.style.display = 'none';
+        vBtn.style.display = 'none';
+        alert(data.message);
+    }
+}
+
+/* =========================
+   RECAPTURE PHOTO
+========================= */
+
+function recapturePhoto(){
+
+    captured = false;
+
+    document.getElementById("previewSection").style.display =
+    "none";
+
+    document.getElementById("capturedImage").src = "";
+
+    status.innerText =
+    "Move your face to complete the verification";
+
+    status.style.color =
+    "white";
+}
+
+/* =========================
+   FACE MESH
+========================= */
+
+const faceMesh = new FaceMesh({
+
+    locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+
+});
+
+faceMesh.setOptions({
+
+    maxNumFaces: 1,
+    refineLandmarks: true
+
+});
+
+faceMesh.onResults(results => {
+
+    if(captured) return;
+
+    if(results.multiFaceLandmarks &&
+       results.multiFaceLandmarks.length > 0){
+
+        const lm =
+        results.multiFaceLandmarks[0];
+
+        const nose =
+        lm[1];
+
+        /* LEFT MOVEMENT */
+
+if(nose.x < 0.47){
+
+    check.left = true;
+
+    document
+    .getElementById('L')
+    .classList
+    .add('done');
+}
+
+/* DOWN MOVEMENT */
+
+if(nose.y > 0.58){
+
+    check.down = true;
+
+    document
+    .getElementById('D')
+    .classList
+    .add('done');
+}
+
+        /* EYE BLINK */
+
+        const eye = Math.hypot(
+
+            lm[159].x - lm[145].x,
+
+            lm[159].y - lm[145].y
+        );
+
+        if(eye < 0.012 && !captured){
+
+            const canvas =
+            document.createElement('canvas');
+
+            canvas.width = video.videoWidth;
+
+            canvas.height = video.videoHeight;
+
+            canvas.getContext('2d')
+            .drawImage(video, 0, 0);
+
+            const capturedData =
+            canvas.toDataURL('image/jpeg');
+
+            document.getElementById("capturedImage").src =
+            capturedData;
+
+            document.getElementById("previewSection").style.display =
+            "block";
+
+            captured = true;
+
+            status.innerText =
+            "Photo Captured ✔";
+
+            status.style.color =
+            "#2ecc71";
+        }
+
+        /* FINAL VERIFY BUTTON */
+
+        if(check.left && check.down){
+
+            document.getElementById('msg').innerText =
+    "Verification Successful ✔ Click VERIFY IDENTITY";
+
+            vBtn.style.display = "block";
+        }
+    }
+});
+
+/* =========================
+   VERIFY
+========================= */
+
+async function sendVerify() {
+
+    /* EMPLOYEE ID */
+
+    const empId =
+        document.getElementById("employee_id").value.trim();
+
+    if(!/^\d{5}$/.test(empId)){
+
+        alert("Employee ID must be exactly 5 digits");
+
+        return;
+    }
+
+    /* NAME */
+
+    const name =
+        document.getElementById("name").value.trim();
+
+    if(name.length < 3){
+
+        alert("Enter valid name");
+
+        return;
+    }
+
+    /* JH DMT */
+
+    const jh =
+        document.getElementById("jh_dmt_select").value;
+
+    if(jh === ""){
+
+        alert("Select JH/DMT category");
+
+        return;
+    }
+
+    /* PHONE */
+
+    const phone =
+        document.getElementById("phone").value.trim();
+
+    if(!/^[6-9]\d{9}$/.test(phone)){
+
+        alert("Invalid phone number");
+
+        return;
+    }
+
+    /* OTP */
+
+    if(!otpVerified){
+
+        alert("Verify OTP first");
+
+        return;
+    }
+
+    /* EMAIL */
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+
+        alert("Invalid email");
+
+        return;
+    }
+
+    /* POLICY */
+
+    if(!document.getElementById("policy").checked){
+
+        alert("Accept all policies");
+
+        return;
+    }
+
+    const mode = authModeSelect.value;
+    let payload = {
+        mode,
+        employee_id: empId,
+        name
+    };
+
+    if (mode === 'live') {
+        if (!captured) {
+            alert('Please complete the live scan and capture your face.');
+            return;
+        }
+
+        const canvas =
+            document.createElement('canvas');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        canvas
+        .getContext('2d')
+        .drawImage(video, 0, 0);
+
+        payload.photo_data = canvas.toDataURL('image/jpeg');
+    }
+
+    const res = await fetch('/verify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    alert(data.message);
+
+    if(data.status === 'success'){
+        window.location.href = "/";
+    }
+}
+
+/* =========================
+   CAMERA
+========================= */
+
+onAuthModeChange();
+
+/* =========================
+   AUTO QUARTER SYSTEM
+========================= */
+
+const now = new Date();
+
+const month = now.getMonth() + 1;
+
+const year = now.getFullYear();
+
+let quarter = "";
+
+if(month >= 1 && month <= 3){
+
+    quarter = "Quarter 1";
+
+}else if(month >= 4 && month <= 6){
+
+    quarter = "Quarter 2";
+
+}else if(month >= 7 && month <= 9){
+
+    quarter = "Quarter 3";
+
+}else{
+
+    quarter = "Quarter 4";
+}
+
+document.getElementById("quarterText").innerText =
+quarter + " - " + year;
+</script>
+
+</body>
+
+</html>

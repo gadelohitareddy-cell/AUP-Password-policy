@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #0f172a; height: 100vh; display: flex; justify-content: center; align-items: center; gap: 30px; font-family: sans-serif; }
+        .btn-card {
+            background: white; padding: 40px; border-radius: 20px; width: 280px;
+            text-align: center; text-decoration: none; color: #0f172a; font-weight: bold;
+            transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .btn-card:hover { transform: scale(1.05); background: #f1f5f9; }
+        .icon { font-size: 50px; color: #0074D9; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('register') }}" class="btn-card">
+        <div class="icon"><i class="fa-solid fa-user-plus"></i></div>
+        New Registration
+    </a>
+    <a href="{{ url_for('face_login') }}" class="btn-card">
+        <div class="icon"><i class="fa-solid fa-camera-retro"></i></div>
+        Already Registered?
+    </a>
+</body>
+</html>

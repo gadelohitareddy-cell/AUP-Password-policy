@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIGITALIZATION OF AUP</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body{
+            height:100vh;
+            background: linear-gradient(135deg,#001f3f,#0074D9,#7FDBFF);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            overflow:hidden;
+        }
+
+        .main-container{
+            text-align:center;
+            color:white;
+            animation: fadeIn 2s ease;
+        }
+
+        /* Updated these two classes to be identical */
+        .main-title, .sub-title {
+            font-size: 70px;
+            font-weight: bold;
+            text-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .sub-title {
+            margin-bottom: 50px; /* Space before the button */
+        }
+
+        .btn{
+            padding:15px 45px;
+            font-size:22px;
+            border:none;
+            border-radius:50px;
+            background:white;
+            color:#003366;
+            cursor:pointer;
+            transition:0.4s;
+            font-weight:bold;
+            text-decoration:none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover{
+            background:#003366;
+            color:white;
+            transform:scale(1.08);
+            box-shadow:0px 0px 20px white;
+        }
+
+        @keyframes fadeIn{
+            from{
+                opacity:0;
+                transform:translateY(-30px);
+            }
+            to{
+                opacity:1;
+                transform:translateY(0px);
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="main-container">
+
+        <div class="main-title">
+            DIGITALIZATION OF AUP
+        </div>
+
+        <div class="sub-title">
+            & PASSWORD POLICY
+        </div>
+
+        <a href="{{ url_for('selection') }}" class="btn">
+            ENTER SYSTEM
+        </a>
+
+    </div>
+
+</body>
+</html>

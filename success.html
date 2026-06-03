@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Success</title>
+
+    <style>
+        body{
+            margin:0;
+            padding:0;
+            font-family:Arial, sans-serif;
+            height:100vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            background:linear-gradient(135deg,#11998e,#38ef7d);
+        }
+
+        /* GLASS CARD WITH ANIMATION */
+        .box{
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            padding:50px;
+            border-radius:25px;
+            text-align:center;
+            box-shadow:0px 20px 40px rgba(0,0,0,0.2);
+            width: 380px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn{
+            from{opacity:0; transform:translateY(20px);}
+            to{opacity:1; transform:translateY(0);}
+        }
+
+        /* TICK WITH POP ANIMATION */
+        .tick{
+            font-size:70px;
+            margin-bottom:20px;
+            animation: pop 0.5s ease;
+        }
+
+        @keyframes pop{
+            0%{transform:scale(0);}
+            100%{transform:scale(1);}
+        }
+
+        h1{
+            color:#0f766e;
+            margin-bottom:20px;
+        }
+
+        p{
+            font-size:20px;
+            color:#555;
+        }
+
+        /* ========================= */
+        /* EMAIL VERIFICATION BADGE */
+        /* ========================= */
+
+        .badge {
+            width: 90px;
+            height: 90px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 40px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+
+        .verified-text {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #16a34a;
+            font-weight: bold;
+        }
+
+        /* ========================= */
+        /* FACE MATCH SECTION        */
+        /* ========================= */
+
+        .match-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 12px;
+            background: #ecfdf5;
+            border: 1px solid #86efac;
+        }
+
+        .match-title {
+            font-size: 16px;
+            color: #14532d;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .match-value {
+            font-size: 28px;
+            color: #16a34a;
+            font-weight: bold;
+        }
+
+        .bar {
+            height: 10px;
+            width: 100%;
+            background: #d1fae5;
+            border-radius: 20px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 96%;
+            background: #22c55e;
+            border-radius: 20px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="box">
+
+        <div class="tick">🎉</div>
+
+        <h1>Welcome Aboard</h1>
+
+        <p>Registration Completed Successfully</p>
+
+        <div class="badge">✔</div>
+
+        <div class="verified-text">
+            Email Verified Successfully
+        </div>
+
+        <div class="match-box">
+
+            <div class="match-title">
+                Face Match Result
+            </div>
+
+            <div class="match-value">
+                96%
+            </div>
+
+            <div class="bar">
+                <div class="bar-fill"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

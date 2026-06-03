@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Admin Dashboard</title>
+
+    <style>
+
+        body{
+            font-family:sans-serif;
+            background:#f1f5f9;
+            padding:40px;
+        }
+
+        .header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+        }
+
+        .logo-section{
+            text-align:center;
+            margin-bottom:25px;
+        }
+
+        .logo-section img{
+            width:90px;
+            height:90px;
+            object-fit:contain;
+            border-radius:10px;
+            background:white;
+            padding:5px;
+        }
+
+        .logo-section h1{
+            margin-bottom:5px;
+            color:#0f172a;
+        }
+
+        .logo-section p{
+            margin-top:0;
+            color:gray;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            background:white;
+            border-radius:10px;
+            overflow:hidden;
+            box-shadow:0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        th, td{
+            padding:15px;
+            text-align:left;
+            border-bottom:1px solid #e2e8f0;
+        }
+
+        th{
+            background:#0f172a;
+            color:white;
+        }
+
+        img{
+            width:50px;
+            height:50px;
+            border-radius:50%;
+            object-fit:cover;
+        }
+
+        .logout{
+            color:#ef4444;
+            text-decoration:none;
+            font-weight:bold;
+        }
+
+        .btn-container{
+            margin-top:25px;
+            display:flex;
+            gap:20px;
+            align-items:center;
+            flex-wrap:wrap;
+        }
+
+        select{
+            padding:10px;
+            border-radius:6px;
+            border:1px solid #ccc;
+        }
+
+        .print-btn{
+            padding:12px 25px;
+            background:#0074D9;
+            color:white;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;
+            font-size:16px;
+        }
+
+        .print-btn:hover{
+            background:#005fa3;
+        }
+
+        .no-data{
+            margin-top:20px;
+            font-weight:bold;
+            color:red;
+            display:none;
+        }
+
+        .stats{
+            margin-bottom:20px;
+            display:flex;
+            gap:20px;
+        }
+
+        .card{
+            padding:10px 15px;
+            background:white;
+            border-radius:8px;
+            box-shadow:0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        @media print {
+
+            .logout,
+            .btn-container,
+            .stats{
+                display:none;
+            }
+
+            body{
+                padding:0;
+                background:white;
+            }
+
+            table{
+                box-shadow:none;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<!-- ================= LOGO SECTION ================= -->
+
+<div class="logo-section">
+
+    <img
+    src="https://images.news9live.com/wp-content/uploads/2023/09/New-Project-2023-09-06T182735.257.jpg?w=1200&enlarge=true"
+    alt="ITC Logo">
+
+    <h1>Admin Dashboard</h1>
+
+    <p>
+        AUP & Password Policy Digitalization System
+    </p>
+
+</div>
+
+<!-- ================= HEADER ================= -->
+
+<div class="header">
+
+    <div></div>
+
+    <a href="/admin_logout" class="logout">
+        Logout
+    </a>
+
+</div>
+
+<!-- ================= STATS ================= -->
+
+<div class="stats">
+
+    <div class="card">
+        Total Employees: <b id="totalCount"></b>
+    </div>
+
+    <div class="card">
+        Visible: <b id="visibleCount"></b>
+    </div>
+
+</div>
+
+<!-- ================= FILTER + PRINT ================= -->
+
+<div class="btn-container">
+
+    <!-- SEARCH BAR -->
+
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search by Name / Employee ID / Phone"
+        onkeyup="searchTable()"
+        style="
+            padding:10px;
+            width:300px;
+            border-radius:6px;
+            border:1px solid #ccc;
+        ">
+
+    <!-- FILTER -->
+
+    <select id="filter" onchange="filterTable()">
+
+        <option value="ALL">All Employees</option>
+
+        <optgroup label="JH CATEGORY">
+            <option value="JH ISI">JH ISI</option>
+            <option value="JH HR">JH HR</option>
+            <option value="JH IT">JH IT</option>
+            <option value="JH 1A">JH 1A</option>
+            <option value="JH Department">JH Department</option>
+            <option value="JH OTHERS">JH OTHERS</option>
+        </optgroup>
+
+        <optgroup label="DMT CATEGORY">
+            <option value="DMT VETEND">DMT VETEND</option>
+            <option value="DMT SEMISKILLED">DMT SEMISKILLED</option>
+            <option value="DMT TIME OFFICE">DMT TIME OFFICE</option>
+            <option value="DMT TRAINEE">DMT TRAINEE</option>
+            <option value="DMT MANAGER">DMT MANAGER</option>
+        </optgroup>
+
+    </select>
+
+    <button class="print-btn" onclick="window.print()">
+        Print Selected
+    </button>
+
+</div>
+
+<!-- ================= TABLE ================= -->
+
+<table>
+
+    <tr>
+        <th>Photo</th>
+        <th>Name</th>
+        <th>Employee ID</th>
+        <th>JH/DMT</th>
+        <th>Phone</th>
+        <th>Date</th>
+    </tr>
+
+    {% for emp in employees %}
+
+    <tr class="row">
+
+        <td>
+            <img src="{{ emp.photo_path }}">
+        </td>
+
+        <td class="name">
+            {{ emp.name }}
+        </td>
+
+        <td class="empid">
+            {{ emp.employee_id }}
+        </td>
+
+        <td class="cat">
+            {{ emp.jh_name }}
+        </td>
+
+        <td class="phone">
+            {{ emp.phone }}
+        </td>
+
+        <td>
+            {{ emp.submission_time }}
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+<!-- ================= NO DATA ================= -->
+
+<div class="no-data" id="noData">
+    No Records Found
+</div>
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+function updateCounts(){
+
+    let rows = document.querySelectorAll(".row");
+    let total = rows.length;
+    let visible = 0;
+
+    rows.forEach(row => {
+
+        if(row.style.display !== "none"){
+            visible++;
+        }
+
+    });
+
+    document.getElementById("totalCount").innerText = total;
+    document.getElementById("visibleCount").innerText = visible;
+}
+
+function filterTable(){
+
+    let filter = document.getElementById("filter").value;
+
+    let rows = document.querySelectorAll(".row");
+
+    let hasData = false;
+
+    rows.forEach(row => {
+
+        let cat = row.querySelector(".cat").innerText;
+
+        if(filter === "ALL" || cat === filter){
+
+            row.style.display = "";
+
+            hasData = true;
+
+        } else {
+
+            row.style.display = "none";
+        }
+
+    });
+
+    document.getElementById("noData").style.display =
+        hasData ? "none" : "block";
+
+    updateCounts();
+}
+
+function searchTable(){
+
+    let input =
+        document.getElementById("searchInput")
+        .value
+        .toLowerCase();
+
+    let rows =
+        document.querySelectorAll(".row");
+
+    let hasData = false;
+
+    rows.forEach(row => {
+
+        let name =
+            row.querySelector(".name")
+            .innerText
+            .toLowerCase();
+
+        let empid =
+            row.querySelector(".empid")
+            .innerText
+            .toLowerCase();
+
+        let phone =
+            row.querySelector(".phone")
+            .innerText
+            .toLowerCase();
+
+        if(
+            name.includes(input) ||
+            empid.includes(input) ||
+            phone.includes(input)
+        ){
+
+            row.style.display = "";
+            hasData = true;
+
+        } else {
+
+            row.style.display = "none";
+        }
+
+    });
+
+    document.getElementById("noData").style.display =
+        hasData ? "none" : "block";
+
+    updateCounts();
+}
+
+// INITIAL LOAD
+updateCounts();
+
+</script>
+
+</body>
+
+</html>

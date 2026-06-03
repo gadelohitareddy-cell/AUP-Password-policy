@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Records</title>
+</head>
+<body>
+
+<h2>📋 Submitted Employee Records</h2>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>JH Name</th>
+        <th>DMT Name</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Photo</th>
+        <th>Time</th>
+    </tr>
+
+    {% for emp in employees %}
+    <tr>
+        <td>{{ emp[0] }}</td>
+        <td>{{ emp[1] }}</td>
+        <td>{{ emp[2] }}</td>
+        <td>{{ emp[3] }}</td>
+        <td>{{ emp[4] }}</td>
+        <td>{{ emp[5] }}</td>
+        <td>
+            <img src="{{ emp[6] }}" width="80">
+        </td>
+        <td>{{ emp[7] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="/">← Back to Form</a>
+
+</body>
+</html>
