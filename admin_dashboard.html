@@ -83,6 +83,7 @@
             gap:20px;
             align-items:center;
             flex-wrap:wrap;
+            margin-bottom:20px;
         }
 
         select{
@@ -126,6 +127,28 @@
             box-shadow:0 2px 5px rgba(0,0,0,0.05);
         }
 
+        /* Interactive Feedback Badges Styles */
+        .rating-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .rating-excellent { background: #d1fae5; color: #065f46; }
+        .rating-very-good { background: #dbeafe; color: #1e40af; }
+        .rating-good { background: #fef3c7; color: #92400e; }
+        .rating-average { background: #ffedd5; color: #9a3412; }
+        .rating-poor { background: #fee2e2; color: #991b1b; }
+
+        .comment-text {
+            max-width: 200px;
+            word-wrap: break-word;
+            font-size: 13px;
+            color: #475569;
+            font-style: italic;
+        }
+
         @media print {
 
             .logout,
@@ -150,8 +173,6 @@
 
 <body>
 
-<!-- ================= LOGO SECTION ================= -->
-
 <div class="logo-section">
 
     <img
@@ -166,8 +187,6 @@
 
 </div>
 
-<!-- ================= HEADER ================= -->
-
 <div class="header">
 
     <div></div>
@@ -177,8 +196,6 @@
     </a>
 
 </div>
-
-<!-- ================= STATS ================= -->
 
 <div class="stats">
 
@@ -190,18 +207,18 @@
         Visible: <b id="visibleCount"></b>
     </div>
 
+    <div class="card" style="border-left: 4px solid #ef4444;">
+        Attention Required (Poor/Average Ratings): <b id="attentionCount">0</b>
+    </div>
+
 </div>
 
-<!-- ================= FILTER + PRINT ================= -->
-
 <div class="btn-container">
-
-    <!-- SEARCH BAR -->
 
     <input
         type="text"
         id="searchInput"
-        placeholder="Search by Name / Employee ID / Phone"
+        placeholder="Search by Name / ID / Phone / Feedback"
         onkeyup="searchTable()"
         style="
             padding:10px;
@@ -209,8 +226,6 @@
             border-radius:6px;
             border:1px solid #ccc;
         ">
-
-    <!-- FILTER -->
 
     <select id="filter" onchange="filterTable()">
 
@@ -235,13 +250,20 @@
 
     </select>
 
+    <select id="ratingFilter" onchange="filterTable()">
+        <option value="ALL">All Ratings</option>
+        <option value="Excellent">Excellent</option>
+        <option value="Very Good">Very Good</option>
+        <option value="Good">Good</option>
+        <option value="Average">Average</option>
+        <option value="Poor">Poor</option>
+    </select>
+
     <button class="print-btn" onclick="window.print()">
         Print Selected
     </button>
 
 </div>
-
-<!-- ================= TABLE ================= -->
 
 <table>
 
@@ -252,6 +274,9 @@
         <th>JH/DMT</th>
         <th>Phone</th>
         <th>Date</th>
+        <th>System Rating</th>
+        <th>Improvement Category</th>
+        <th>User Comments</th>
     </tr>
 
     {% for emp in employees %}
@@ -282,19 +307,39 @@
             {{ emp.submission_time }}
         </td>
 
+        <td class="rating-cell">
+            {% if emp.feedback_rating == 'Excellent' %}
+                <span class="rating-badge rating-excellent">Excellent</span>
+            {% elif emp.feedback_rating == 'Very Good' %}
+                <span class="rating-badge rating-very-good">Very Good</span>
+            {% elif emp.feedback_rating == 'Good' %}
+                <span class="rating-badge rating-good">Good</span>
+            {% elif emp.feedback_rating == 'Average' %}
+                <span class="rating-badge rating-average">Average</span>
+            {% elif emp.feedback_rating == 'Poor' %}
+                <span class="rating-badge rating-poor">Poor</span>
+            {% else %}
+                <span class="rating-badge" style="background:#e2e8f0; color:#475569;">N/A</span>
+            {% endif %}
+        </td>
+
+        <td class="feedback-type">
+            {{ emp.feedback_category if emp.feedback_category else 'None' }}
+        </td>
+
+        <td class="comment-text">
+            {{ emp.feedback_comments if emp.feedback_comments else 'No comments left.' }}
+        </td>
+
     </tr>
 
     {% endfor %}
 
 </table>
 
-<!-- ================= NO DATA ================= -->
-
 <div class="no-data" id="noData">
     No Records Found
 </div>
-
-<!-- ================= SCRIPT ================= -->
 
 <script>
 
@@ -303,98 +348,82 @@ function updateCounts(){
     let rows = document.querySelectorAll(".row");
     let total = rows.length;
     let visible = 0;
+    let attentionRequired = 0;
 
     rows.forEach(row => {
+        let ratingText = row.querySelector(".rating-cell").innerText.trim();
+        if(ratingText === "Poor" || ratingText === "Average") {
+            attentionRequired++;
+        }
 
         if(row.style.display !== "none"){
             visible++;
         }
-
     });
 
     document.getElementById("totalCount").innerText = total;
     document.getElementById("visibleCount").innerText = visible;
+    document.getElementById("attentionCount").innerText = attentionRequired;
 }
 
 function filterTable(){
 
     let filter = document.getElementById("filter").value;
-
+    let ratingFilter = document.getElementById("ratingFilter").value;
     let rows = document.querySelectorAll(".row");
-
     let hasData = false;
 
     rows.forEach(row => {
-
         let cat = row.querySelector(".cat").innerText;
+        let rating = row.querySelector(".rating-cell").innerText.trim();
 
-        if(filter === "ALL" || cat === filter){
+        let matchesCat = (filter === "ALL" || cat === filter);
+        let matchesRating = (ratingFilter === "ALL" || rating === ratingFilter);
 
+        if(matchesCat && matchesRating){
             row.style.display = "";
-
             hasData = true;
-
         } else {
-
             row.style.display = "none";
         }
-
     });
 
-    document.getElementById("noData").style.display =
-        hasData ? "none" : "block";
-
+    document.getElementById("noData").style.display = hasData ? "none" : "block";
     updateCounts();
 }
 
 function searchTable(){
 
-    let input =
-        document.getElementById("searchInput")
-        .value
-        .toLowerCase();
-
-    let rows =
-        document.querySelectorAll(".row");
-
+    let input = document.getElementById("searchInput").value.toLowerCase();
+    let rows = document.querySelectorAll(".row");
     let hasData = false;
 
     rows.forEach(row => {
 
-        let name =
-            row.querySelector(".name")
-            .innerText
-            .toLowerCase();
-
-        let empid =
-            row.querySelector(".empid")
-            .innerText
-            .toLowerCase();
-
-        let phone =
-            row.querySelector(".phone")
-            .innerText
-            .toLowerCase();
+        let name = row.querySelector(".name").innerText.toLowerCase();
+        let empid = row.querySelector(".empid").innerText.toLowerCase();
+        let phone = row.querySelector(".phone").innerText.toLowerCase();
+        
+        let rating = row.querySelector(".rating-cell").innerText.toLowerCase();
+        let fbType = row.querySelector(".feedback-type").innerText.toLowerCase();
+        let comments = row.querySelector(".comment-text").innerText.toLowerCase();
 
         if(
             name.includes(input) ||
             empid.includes(input) ||
-            phone.includes(input)
+            phone.includes(input) ||
+            rating.includes(input) ||
+            fbType.includes(input) ||
+            comments.includes(input)
         ){
-
             row.style.display = "";
             hasData = true;
-
         } else {
-
             row.style.display = "none";
         }
-
     });
 
-    document.getElementById("noData").style.display =
-        hasData ? "none" : "block";
-
+    document.getElementById("noData").style.display = hasData ? "none" : "block";
     updateCounts();
 }
 

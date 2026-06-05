@@ -8,10 +8,10 @@
 
     <meta charset="UTF-8">
 
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
-
-    <style>
-
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<style>
         body{
             background:#1e222d;
             color:white;
@@ -373,7 +373,7 @@
             Move your face to complete the verification
         </p>
 
-        <video id="video" autoplay muted></video>
+        <video id="video" autoplay muted playsinline></video>
 
         <br><br>
 
@@ -396,30 +396,51 @@
 
             <br><br>
 
-            <button
-                type="button"
-                onclick="recapturePhoto()"
-                style="
-                background:#ff9800;
-                width:220px;
-                "
-            >
-                Recapture Photo
-            </button>
+            <div style="display:flex; justify-content:center; gap:10px;">
+
+    <button
+        type="button"
+        onclick="showPreviewPhoto()"
+        style="
+        background:#2196f3;
+        width:220px;
+        ">
+        Preview Photo
+    </button>
+
+    <button
+        type="button"
+        onclick="recapturePhoto()"
+        style="
+        background:#ff9800;
+        width:220px;
+        ">
+        Recapture Photo
+    </button>
+
+</div>
+<div id="largePreviewSection"
+     style="
+     display:none;
+     text-align:center;
+     margin-top:20px;
+     ">
+
+    <h3>Image Preview</h3>
+
+    <img
+        id="largePreviewImage"
+        style="
+        width:400px;
+        max-width:100%;
+        border-radius:10px;
+        border:3px solid #38bdf8;
+        ">
+</div>
 
         </div>
 
-        <div class="grid">
-
-            <div id="L" class="box">
-                Left
-            </div>
-
-            <div id="D" class="box">
-                Down
-            </div>
-
-        </div>
+        
     </div>
 
     <div id="registeredSection" style="display:none; margin-top:25px;">
@@ -465,15 +486,13 @@ const registeredImage = document.getElementById('registeredImage');
 const registeredMsg = document.getElementById('registeredMsg');
 
 let captured = false;
+let faceStartTime = null;
 
 let registeredLoaded = false;
 
 let currentStream = null;
 
-let check = {
-    left: false,
-    down: false
-};
+
 
 let generatedOTP = "";
 
@@ -544,33 +563,50 @@ function onAuthModeChange() {
         registeredSection.style.display = 'none';
         registeredPhotoPreview.style.display = 'none';
         registeredLoaded = false;
-        vBtn.style.display = check.left && check.down ? 'block' : 'none';
+        vBtn.style.display = "none";
+        
         status.innerText = 'Move your face to complete the verification';
         status.style.color = 'white';
         recapturePhoto();
-        startCamera();
+        
     }
 }
 
 function startCamera() {
-    if (currentStream) {
-        return;
-    }
-
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
+
             currentStream = stream;
             video.srcObject = stream;
-            const loop = async () => {
-                await faceMesh.send({ image: video });
-                requestAnimationFrame(loop);
+
+            video.onloadedmetadata = async () => {
+                await video.play();
+
+                // WAIT UNTIL VIDEO IS READY
+                function waitAndStart() {
+
+                    if (video.videoWidth === 0) {
+                        requestAnimationFrame(waitAndStart);
+                        return;
+                    }
+
+                    const loop = async () => {
+                        if (video.readyState === 4) {
+                            await faceMesh.send({ image: video });
+                        }
+                        requestAnimationFrame(loop);
+                    };
+
+                    loop();
+                }
+
+                waitAndStart();
             };
-            loop();
         })
-        .catch(error => {
-            console.error('Camera error:', error);
-            status.innerText = 'Unable to start live scan camera.';
-            status.style.color = 'red';
+        .catch(err => {
+            console.error(err);
+            status.innerText = "Camera blocked or permission denied";
+            status.style.color = "red";
         });
 }
 
@@ -628,16 +664,40 @@ function recapturePhoto(){
 
     captured = false;
 
+    faceStartTime = null;
+
     document.getElementById("previewSection").style.display =
+    "none";
+
+    document.getElementById("largePreviewSection").style.display =
     "none";
 
     document.getElementById("capturedImage").src = "";
 
     status.innerText =
-    "Move your face to complete the verification";
+    "Center your face and look straight";
 
     status.style.color =
     "white";
+
+    vBtn.style.display =
+    "none";
+}
+function showPreviewPhoto(){
+
+    const img =
+    document.getElementById("capturedImage").src;
+
+    if(!img){
+        alert("No photo captured");
+        return;
+    }
+
+    document.getElementById("largePreviewImage").src =
+    img;
+
+    document.getElementById("largePreviewSection").style.display =
+    "block";
 }
 
 /* =========================
@@ -653,17 +713,30 @@ const faceMesh = new FaceMesh({
 
 faceMesh.setOptions({
 
-    maxNumFaces: 1,
+    maxNumFaces: 5,
     refineLandmarks: true
 
 });
 
 faceMesh.onResults(results => {
+    console.log(results);
 
     if(captured) return;
 
     if(results.multiFaceLandmarks &&
        results.multiFaceLandmarks.length > 0){
+
+        if(results.multiFaceLandmarks.length > 1){
+
+            faceStartTime = null;
+
+            status.innerText =
+            "⚠ 2 or more people detected. Only 1 person is allowed.";
+
+            status.style.color = "red";
+
+            return;
+        }
 
         const lm =
         results.multiFaceLandmarks[0];
@@ -671,80 +744,85 @@ faceMesh.onResults(results => {
         const nose =
         lm[1];
 
-        /* LEFT MOVEMENT */
-
-if(nose.x < 0.47){
-
-    check.left = true;
-
-    document
-    .getElementById('L')
-    .classList
-    .add('done');
-}
-
-/* DOWN MOVEMENT */
-
-if(nose.y > 0.58){
-
-    check.down = true;
-
-    document
-    .getElementById('D')
-    .classList
-    .add('done');
-}
-
-        /* EYE BLINK */
-
-        const eye = Math.hypot(
-
-            lm[159].x - lm[145].x,
-
-            lm[159].y - lm[145].y
-        );
-
-        if(eye < 0.012 && !captured){
-
-            const canvas =
-            document.createElement('canvas');
-
-            canvas.width = video.videoWidth;
-
-            canvas.height = video.videoHeight;
-
-            canvas.getContext('2d')
-            .drawImage(video, 0, 0);
-
-            const capturedData =
-            canvas.toDataURL('image/jpeg');
-
-            document.getElementById("capturedImage").src =
-            capturedData;
-
-            document.getElementById("previewSection").style.display =
-            "block";
-
-            captured = true;
+        if(
+            nose.x > 0.40 &&
+            nose.x < 0.60 &&
+            nose.y > 0.30 &&
+            nose.y < 0.70
+        ){
 
             status.innerText =
-            "Photo Captured ✔";
+            "Keep looking straight...";
 
             status.style.color =
-            "#2ecc71";
+            "#38bdf8";
+
+            if(!faceStartTime){
+
+                faceStartTime = Date.now();
+            }
+
+            if(Date.now() - faceStartTime >= 2000){
+
+                const canvas =
+                document.createElement('canvas');
+
+                canvas.width =
+                video.videoWidth;
+
+                canvas.height =
+                video.videoHeight;
+
+                canvas
+                .getContext('2d')
+                .drawImage(video,0,0);
+
+                const capturedData =
+                canvas.toDataURL('image/jpeg');
+
+                document.getElementById("capturedImage").src =
+                capturedData;
+
+                document.getElementById("previewSection").style.display =
+                "block";
+
+                captured = true;
+
+                status.innerText =
+                "Photo Captured ✔";
+
+                status.style.color =
+                "#2ecc71";
+
+                vBtn.style.display =
+                "block";
+            }
+
+        }else{
+
+            faceStartTime = null;
+
+            status.innerText =
+            "Center your face and look straight";
+
+            status.style.color =
+            "#ff6b6b";
         }
 
-        /* FINAL VERIFY BUTTON */
+    }else{
 
-        if(check.left && check.down){
+        faceStartTime = null;
 
-            document.getElementById('msg').innerText =
-    "Verification Successful ✔ Click VERIFY IDENTITY";
+        status.innerText =
+        "No face detected";
 
-            vBtn.style.display = "block";
-        }
+        status.style.color =
+        "#ff6b6b";
     }
 });
+        
+
+        
 
 /* =========================
    VERIFY
@@ -843,18 +921,8 @@ async function sendVerify() {
             return;
         }
 
-        const canvas =
-            document.createElement('canvas');
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        canvas
-        .getContext('2d')
-        .drawImage(video, 0, 0);
-
-        payload.photo_data = canvas.toDataURL('image/jpeg');
-    }
+       payload.photo_data =
+document.getElementById("capturedImage").src;
 
     const res = await fetch('/verify', {
         method: 'POST',
@@ -910,6 +978,9 @@ if(month >= 1 && month <= 3){
 
 document.getElementById("quarterText").innerText =
 quarter + " - " + year;
+window.onload = () => {
+    startCamera();
+};
 </script>
 
 </body>

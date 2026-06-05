@@ -36,7 +36,6 @@ SENDER_PASSWORD = "zacsshoqhqebqzxi"
 # =========================
 
 def init_db():
-
     conn = sqlite3.connect("employee.db")
     cursor = conn.cursor()
 
@@ -50,7 +49,10 @@ def init_db():
             phone TEXT,
             email TEXT,
             photo_path TEXT,
-            submission_time TEXT
+            submission_time TEXT,
+            feedback_rating TEXT DEFAULT 'N/A',
+            feedback_category TEXT DEFAULT 'None',
+            feedback_comments TEXT DEFAULT 'No comments left.'
         )
     ''')
 
@@ -64,9 +66,7 @@ init_db()
 # =========================
 
 def send_success_email(receiver_email, employee_name):
-
     try:
-
         subject = "AUP Registration Successful"
 
         body = f"""
@@ -200,7 +200,6 @@ AUP Security System
 # =========================
 
 def send_sms(phone, employee_name):
-
     message = f"""
 Hello {employee_name},
 
@@ -209,9 +208,7 @@ Your registration for DIGITALIZATION OF AUP & PASSWORD POLICY was completed succ
 Regards,
 AUP Security System
 """
-
     try:
-
         response = requests.post(
             'https://textbelt.com/text',
             {
@@ -220,9 +217,7 @@ AUP Security System
                 'key': 'textbelt'
             }
         )
-
         print(response.json())
-
     except Exception as e:
         print("SMS ERROR:", e)
 
@@ -248,19 +243,12 @@ def user_options():
 
 @app.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
-
     if request.method == "POST":
-
         password = request.form.get("password")
-
         if password == ADMIN_PASSWORD:
-
             session['admin_logged_in'] = True
-
             return redirect(url_for("admin_dashboard"))
-
         return "<h1>Access Denied</h1>"
-
     return render_template("admin_login.html")
 
 # =========================
@@ -269,19 +257,14 @@ def admin_login():
 
 @app.route("/admin_dashboard")
 def admin_dashboard():
-
     if not session.get('admin_logged_in'):
         return redirect(url_for("admin_login"))
 
     conn = sqlite3.connect("employee.db")
     conn.row_factory = sqlite3.Row
-
     cursor = conn.cursor()
-
     cursor.execute("SELECT * FROM employees ORDER BY id DESC")
-
     employees = cursor.fetchall()
-
     conn.close()
 
     return render_template("admin_dashboard.html", employees=employees)
@@ -292,9 +275,7 @@ def admin_dashboard():
 
 @app.route("/admin_logout")
 def admin_logout():
-
     session.pop('admin_logged_in', None)
-
     return redirect(url_for("index"))
 
 # =========================
@@ -315,7 +296,6 @@ def face_login():
 
 @app.route("/submit", methods=["POST"])
 def submit():
-
     employee_id = request.form.get("employee_id").strip()
     name = request.form.get("name").strip()
     jh_dmt = request.form.get("jh_dmt_name").strip()
@@ -327,6 +307,11 @@ def submit():
     phone = request.form.get("phone").strip()
     email = request.form.get("email").strip()
     photo_data = request.form.get("photo_data")
+
+    # Capture dynamic user feedback inputs
+    feedback_rating = request.form.get("feedback_rating", "N/A").strip()
+    feedback_category = request.form.get("feedback_category", "None").strip()
+    feedback_comments = request.form.get("feedback_comments", "No comments left.").strip()
 
     if len(employee_id) < 3:
         return "Invalid Employee ID"
@@ -346,14 +331,10 @@ def submit():
     photo_path = ""
 
     if photo_data:
-
         header, encoded = photo_data.split(",", 1)
         image_data = base64.b64decode(encoded)
-
         filename = f"{employee_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-
         photo_path = os.path.join(UPLOAD_FOLDER, filename)
-
         with open(photo_path, "wb") as f:
             f.write(image_data)
 
@@ -362,8 +343,8 @@ def submit():
 
     cursor.execute("""
         INSERT INTO employees
-        (employee_id, name, jh_name, dmt_name, phone, email, photo_path, submission_time)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (employee_id, name, jh_name, dmt_name, phone, email, photo_path, submission_time, feedback_rating, feedback_category, feedback_comments)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         employee_id,
         name,
@@ -372,7 +353,10 @@ def submit():
         phone,
         email,
         photo_path,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        feedback_rating if feedback_rating else "N/A",
+        feedback_category if feedback_category else "None",
+        feedback_comments if feedback_comments else "No comments left."
     ))
 
     conn.commit()
@@ -389,7 +373,6 @@ def submit():
 
 @app.route("/load_registered_photo", methods=["POST"])
 def load_registered_photo():
-
     data = request.json
     employee_id = data.get("employee_id", "").strip()
     name = data.get("name", "").strip()
@@ -424,14 +407,12 @@ def load_registered_photo():
 
 @app.route("/verify", methods=["POST"])
 def verify():
-
     data = request.json
     mode = data.get("mode", "live")
     employee_id = data.get("employee_id", "").strip()
     name = data.get("name", "").strip()
 
     if mode == "registered":
-
         if not re.match(r"^\d{5}$", employee_id) or len(name) < 3:
             return jsonify({"status": "error", "message": "Invalid Employee ID or name."})
 
@@ -476,9 +457,7 @@ def verify():
     conn.close()
 
     for name, path in rows:
-
         if path and os.path.exists(path):
-
             db_img = face_recognition.load_image_file(path)
             db_encs = face_recognition.face_encodings(db_img)
 
@@ -489,10 +468,6 @@ def verify():
                 })
 
     return jsonify({"status": "error", "message": "Verification Failed."})
-
-# =========================
-# RUN APP
-# =========================
 
 if __name__ == "__main__":
     app.run(debug=True)
